@@ -93,17 +93,18 @@ var Windy = function(params) {
       d = x * y;
     var u = g00[0] * a + g10[0] * b + g01[0] * c + g11[0] * d;
     var v = g00[1] * a + g10[1] * b + g01[1] * c + g11[1] * d;
-    return [u, v, Math.sqrt(u * u + v * v)];
+    const tmp = g00[2] * a + g10[2] * b + g01[2] * c + g11[2] * d;
+    return [u, v, Math.sqrt(u * u + v * v),tmp];
   };
 
-  var createWindBuilder = function(uComp, vComp) {
+  var createWindBuilder = function(uComp, vComp,temp) {
     var uData = uComp.data,
       vData = vComp.data;
     return {
       header: uComp.header,
       //recipe: recipeFor("wind-" + uComp.header.surface1Value),
       data: function(i) {
-        return [uData[i], vData[i]];
+        return [uData[i], vData[i],temp.data[i]];
       },
       interpolate: bilinearInterpolateVector
     };
@@ -112,8 +113,9 @@ var Windy = function(params) {
   var createBuilder = function(data) {
     var uComp = null,
       vComp = null,
+      temp=null,
       scalar = null;
-
+      
     data.forEach(function(record) {
       switch (
         record.header.parameterCategory +
@@ -128,12 +130,15 @@ var Windy = function(params) {
         case "2,3":
           vComp = record;
           break;
+        case '0,0':
+          temp = record;
+          break;
         default:
           scalar = record;
       }
     });
 
-    return createWindBuilder(uComp, vComp);
+    return createWindBuilder(uComp, vComp,temp);
   };
 
   var buildGrid = function(data, callback) {

@@ -145,18 +145,20 @@ L.Control.Velocity = L.Control.extend({
       gridValue &&
       !isNaN(gridValue[0]) &&
       !isNaN(gridValue[1]) &&
-      gridValue[2]
+      gridValue[2] &&
+      gridValue[3]
     ) {
     var deg = self.vectorToDegrees(gridValue[0], gridValue[1], this.options.angleConvention);
     var cardinal = this.options.showCardinal ? ` (${self.degreesToCardinalDirection(deg)}) ` : '';
 
 		htmlOut = `<strong> ${this.options.velocityType} ${
-			this.options.directionString
-		}: </strong> ${deg.toFixed(2)}°${cardinal}, <strong> ${this.options.velocityType} ${
-			this.options.speedString
-		}: </strong> ${self
-			.vectorToSpeed(gridValue[0], gridValue[1], this.options.speedUnit)
-			.toFixed(2)} ${this.options.speedUnit}`;
+      this.options.directionString
+    }: </strong> ${deg.toFixed(2)}°${cardinal}, <strong> ${this.options.velocityType} ${
+      this.options.speedString
+    }: </strong> ${self
+      .vectorToSpeed(gridValue[0], gridValue[1], this.options.speedUnit)
+      .toFixed(2)} ${this.options.speedUnit}
+       <strong>Temp: </strong>${(gridValue[3] - 273.15).toFixed(1)}  + "°C"`;
     } else {
       htmlOut = this.options.emptyString;
     }
