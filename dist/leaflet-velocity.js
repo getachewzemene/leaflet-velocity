@@ -258,10 +258,10 @@ L.Control.Velocity = L.Control.extend({
 
     var htmlOut = "";
 
-    if (gridValue && !isNaN(gridValue[0]) && !isNaN(gridValue[1]) && gridValue[2]) {
+    if (gridValue && !isNaN(gridValue[0]) && !isNaN(gridValue[1]) && gridValue[2] && gridValue[3]) {
       var deg = self.vectorToDegrees(gridValue[0], gridValue[1], this.options.angleConvention);
       var cardinal = this.options.showCardinal ? " (".concat(self.degreesToCardinalDirection(deg), ") ") : '';
-      htmlOut = "<strong> ".concat(this.options.velocityType, " ").concat(this.options.directionString, ": </strong> ").concat(deg.toFixed(2), "\xB0").concat(cardinal, ", <strong> ").concat(this.options.velocityType, " ").concat(this.options.speedString, ": </strong> ").concat(self.vectorToSpeed(gridValue[0], gridValue[1], this.options.speedUnit).toFixed(2), " ").concat(this.options.speedUnit);
+      htmlOut = "<strong> ".concat(this.options.velocityType, " ").concat(this.options.directionString, ": </strong> ").concat(deg.toFixed(2), "\xB0").concat(cardinal, ", <strong> ").concat(this.options.velocityType, " ").concat(this.options.speedString, ": </strong> ").concat(self.vectorToSpeed(gridValue[0], gridValue[1], this.options.speedUnit).toFixed(2), " ").concat(this.options.speedUnit, "\n       <strong>Temp: </strong>").concat((gridValue[3] - 273.15).toFixed(1), "  + \"\xB0C\"");
     } else {
       htmlOut = this.options.emptyString;
     }
@@ -525,17 +525,18 @@ var Windy = function Windy(params) {
         d = x * y;
     var u = g00[0] * a + g10[0] * b + g01[0] * c + g11[0] * d;
     var v = g00[1] * a + g10[1] * b + g01[1] * c + g11[1] * d;
-    return [u, v, Math.sqrt(u * u + v * v)];
+    var tmp = g00[2] * a + g10[2] * b + g01[2] * c + g11[2] * d;
+    return [u, v, Math.sqrt(u * u + v * v), tmp];
   };
 
-  var createWindBuilder = function createWindBuilder(uComp, vComp) {
+  var createWindBuilder = function createWindBuilder(uComp, vComp, temp) {
     var uData = uComp.data,
         vData = vComp.data;
     return {
       header: uComp.header,
       //recipe: recipeFor("wind-" + uComp.header.surface1Value),
       data: function data(i) {
-        return [uData[i], vData[i]];
+        return [uData[i], vData[i], temp.data[i]];
       },
       interpolate: bilinearInterpolateVector
     };
@@ -544,6 +545,7 @@ var Windy = function Windy(params) {
   var createBuilder = function createBuilder(data) {
     var uComp = null,
         vComp = null,
+        temp = null,
         scalar = null;
     data.forEach(function (record) {
       switch (record.header.parameterCategory + "," + record.header.parameterNumber) {
@@ -557,11 +559,15 @@ var Windy = function Windy(params) {
           vComp = record;
           break;
 
+        case '0,0':
+          temp = record;
+          break;
+
         default:
           scalar = record;
       }
     });
-    return createWindBuilder(uComp, vComp);
+    return createWindBuilder(uComp, vComp, temp);
   };
 
   var buildGrid = function buildGrid(data, callback) {
